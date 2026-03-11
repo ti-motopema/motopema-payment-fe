@@ -1,28 +1,34 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
+import { getAxiosStatus, getCheckoutSession, payCheckoutSession } from "@/lib/checkout-api";
+import { queryClient } from "@/lib/queryClient";
+import type {
+  CheckoutSession,
+  CreditCardFormData,
+  DebitCardFormData,
+  PaymentMethod,
+  PaymentResult,
+} from "@/shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { CheckoutSession, PaymentMethod, CreditCardFormData, DebitCardFormData, PaymentResult } from "@/shared/schema";
-
-import Header from "@/components/checkout/Header";
-import CustomerInfoCard from "@/components/checkout/CustomerInfoCard";
-import OrderSummaryCard from "@/components/checkout/OrderSummaryCard";
-import PriceSummary from "@/components/checkout/PriceSummary";
-import PaymentMethodSelector from "@/components/checkout/PaymentMethodSelector";
+import { Card, CardContent } from "@/components/ui/card";
+import CpfVerification from "@/components/checkout/CpfVerification";
 import CreditCardForm from "@/components/checkout/CreditCardForm";
+import CustomerInfoCard from "@/components/checkout/CustomerInfoCard";
 import DebitCardForm from "@/components/checkout/DebitCardForm";
-import PixPaymentPanel from "@/components/checkout/PixPaymentPanel";
-import SuccessState from "@/components/checkout/SuccessState";
 import ErrorState from "@/components/checkout/ErrorState";
 import ExpiredState from "@/components/checkout/ExpiredState";
-import PaymentFailedState from "@/components/checkout/PaymentFailedState";
-import CpfVerification from "@/components/checkout/CpfVerification";
+import Header from "@/components/checkout/Header";
 import LoadingSkeleton from "@/components/checkout/LoadingSkeleton";
+import OrderSummaryCard from "@/components/checkout/OrderSummaryCard";
+import PaymentFailedState from "@/components/checkout/PaymentFailedState";
+import PaymentMethodSelector from "@/components/checkout/PaymentMethodSelector";
+import PixPaymentPanel from "@/components/checkout/PixPaymentPanel";
+import PriceSummary from "@/components/checkout/PriceSummary";
 import SecurityFooter from "@/components/checkout/SecurityFooter";
+import SuccessState from "@/components/checkout/SuccessState";
 
 export default function CheckoutPage() {
   const params = useParams<{ sessionId: string }>();
@@ -38,46 +44,56 @@ export default function CheckoutPage() {
   const [failureMessage, setFailureMessage] = useState("");
 
   const { data: session, isLoading, error } = useQuery<CheckoutSession>({
-    queryKey: ["/api/checkout", sessionId],
+    queryKey: ["checkout", sessionId],
+    queryFn: () => getCheckoutSession(sessionId),
   });
+
+  const isPending = session?.status === "pending";
+  const isPaid = session?.status === "paid";
+  const isExpired = session?.status === "expired";
+  const isCancelled = session?.status === "cancelled";
+
+  console.log("Session data:", session, "Loading:", isLoading, "Error:", error);
+
+  const invalidateSession = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["checkout", sessionId] });
+  }, [sessionId]);
 
   const handleRetry = useCallback(() => {
     setPaymentFailed(false);
     setFailureMessage("");
     setPaymentResult(null);
     setPixGenerated(false);
-    queryClient.invalidateQueries({ queryKey: ["/api/checkout", sessionId] });
-  }, [sessionId]);
+    invalidateSession();
+  }, [invalidateSession]);
 
-  const handlePaymentResponse = useCallback(async (result: Response, method: string) => {
-    const json: PaymentResult = await result.json();
-
-    if (!json.success) {
+  const handlePaymentResponse = useCallback((result: PaymentResult, method: string) => {
+    if (!result.success) {
       setPaymentFailed(true);
-      setFailureMessage(json.message || "Pagamento recusado.");
+      setFailureMessage(result.message || "Pagamento recusado.");
       return;
     }
 
-    setPaymentResult(json);
+    setPaymentResult(result);
 
     if (method === "pix") {
       setPixGenerated(true);
     }
 
-    queryClient.invalidateQueries({ queryKey: ["/api/checkout", sessionId] });
-  }, [sessionId]);
+    invalidateSession();
+  }, [invalidateSession]);
 
   const handleCreditSubmit = async (data: CreditCardFormData) => {
     setIsProcessing(true);
     try {
-      const result = await apiRequest("POST", `/api/checkout/${sessionId}/pay`, {
+      const result = await payCheckoutSession(sessionId, {
         method: "credit",
         ...data,
       });
-      await handlePaymentResponse(result, "credit");
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message?.includes("403")) {
-        queryClient.invalidateQueries({ queryKey: ["/api/checkout", sessionId] });
+      handlePaymentResponse(result, "credit");
+    } catch (error: unknown) {
+      if (getAxiosStatus(error) === 403) {
+        invalidateSession();
       } else {
         toast({ title: "Erro ao processar pagamento", description: "Tente novamente.", variant: "destructive" });
       }
@@ -89,14 +105,14 @@ export default function CheckoutPage() {
   const handleDebitSubmit = async (data: DebitCardFormData) => {
     setIsProcessing(true);
     try {
-      const result = await apiRequest("POST", `/api/checkout/${sessionId}/pay`, {
+      const result = await payCheckoutSession(sessionId, {
         method: "debit",
         ...data,
       });
-      await handlePaymentResponse(result, "debit");
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message?.includes("403")) {
-        queryClient.invalidateQueries({ queryKey: ["/api/checkout", sessionId] });
+      handlePaymentResponse(result, "debit");
+    } catch (error: unknown) {
+      if (getAxiosStatus(error) === 403) {
+        invalidateSession();
       } else {
         toast({ title: "Erro ao processar pagamento", description: "Tente novamente.", variant: "destructive" });
       }
@@ -108,13 +124,11 @@ export default function CheckoutPage() {
   const handlePixGenerate = async () => {
     setIsProcessing(true);
     try {
-      const result = await apiRequest("POST", `/api/checkout/${sessionId}/pay`, {
-        method: "pix",
-      });
-      await handlePaymentResponse(result, "pix");
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message?.includes("403")) {
-        queryClient.invalidateQueries({ queryKey: ["/api/checkout", sessionId] });
+      const result = await payCheckoutSession(sessionId, { method: "pix" });
+      handlePaymentResponse(result, "pix");
+    } catch (error: unknown) {
+      if (getAxiosStatus(error) === 403) {
+        invalidateSession();
       } else {
         toast({ title: "Erro ao gerar PIX", description: "Tente novamente.", variant: "destructive" });
       }
@@ -137,7 +151,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!cpfVerified && session.status === "active") {
+  if (!cpfVerified && isPending) {
     return (
       <CpfVerification
         sessionId={sessionId}
@@ -148,7 +162,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (session.status === "completed") {
+  if (isPaid) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -162,7 +176,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (session.status === "expired") {
+  if (isExpired) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -176,8 +190,18 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
+        <PaymentFailedState message={failureMessage} onRetry={handleRetry} />
+        <SecurityFooter />
+      </div>
+    );
+  }
+
+  if (isCancelled) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
         <PaymentFailedState
-          message={failureMessage}
+          message={session.failureMessage || "Este pagamento foi cancelado."}
           onRetry={handleRetry}
         />
         <SecurityFooter />
@@ -187,9 +211,8 @@ export default function CheckoutPage() {
 
   if (paymentResult?.success && !pixGenerated) {
     const effectiveMethodsForSuccess: PaymentMethod[] =
-      session.paymentType === "consorcio"
-        ? session.availablePaymentMethods
-        : ["pix"];
+      session.paymentType === "consorcio" ? session.availablePaymentMethods : ["pix"];
+
     const resolvedMethod: PaymentMethod =
       selectedMethod && effectiveMethodsForSuccess.includes(selectedMethod)
         ? selectedMethod
@@ -214,9 +237,7 @@ export default function CheckoutPage() {
   const timeRemainingMin = Math.ceil(timeRemainingMs / 60000);
 
   const effectiveMethods: PaymentMethod[] =
-    session.paymentType === "consorcio"
-      ? session.availablePaymentMethods
-      : ["pix"];
+    session.paymentType === "consorcio" ? session.availablePaymentMethods : ["pix"];
 
   const activeMethod: PaymentMethod =
     selectedMethod && effectiveMethods.includes(selectedMethod)
@@ -229,7 +250,10 @@ export default function CheckoutPage() {
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {timeRemainingMin <= 5 && timeRemainingMin > 0 && (
-          <div className="mb-4 flex items-center gap-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3 text-sm text-amber-800 dark:text-amber-200" data-testid="warning-expiration">
+          <div
+            className="mb-4 flex items-center gap-2 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200 border border-amber-200"
+            data-testid="warning-expiration"
+          >
             <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
@@ -253,8 +277,8 @@ export default function CheckoutPage() {
                 <PaymentMethodSelector
                   methods={effectiveMethods}
                   selected={activeMethod}
-                  onSelect={(m) => {
-                    setSelectedMethod(m);
+                  onSelect={(method) => {
+                    setSelectedMethod(method);
                     setPixGenerated(false);
                     setPaymentResult(null);
                   }}
@@ -270,10 +294,7 @@ export default function CheckoutPage() {
                   )}
 
                   {activeMethod === "debit" && (
-                    <DebitCardForm
-                      onSubmit={handleDebitSubmit}
-                      isProcessing={isProcessing}
-                    />
+                    <DebitCardForm onSubmit={handleDebitSubmit} isProcessing={isProcessing} />
                   )}
 
                   {activeMethod === "pix" && (
@@ -293,7 +314,7 @@ export default function CheckoutPage() {
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                   <span>
-                    Seus dados são transmitidos com criptografia e não são armazenados em nossos servidores.
+                    Seus dados sao transmitidos com criptografia e nao sao armazenados em nossos servidores.
                   </span>
                 </div>
               </CardContent>

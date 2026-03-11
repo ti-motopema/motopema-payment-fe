@@ -1,8 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Backend integration
+
+O frontend nao chama a API da porta `8000` diretamente no browser. As requisicoes passam pelas rotas internas de `app/api`, que funcionam como proxy server-side para evitar CORS.
+
+Crie um arquivo `.env.local` com:
+
+```bash
+BACKEND_API_URL=http://127.0.0.1:8000
+```
+
+Rotas internas usadas pelo frontend:
+
+- `GET /api/checkout/:sessionId`
+- `POST /api/checkout/:sessionId/verify-cpf`
+- `POST /api/checkout/:sessionId/pay`
+
+Os mapeamentos para a API externa ficam centralizados em `lib/backend/checkout.ts`.
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 npm run dev

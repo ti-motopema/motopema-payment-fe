@@ -3,7 +3,7 @@ import { z } from "zod";
 export const paymentMethodEnum = z.enum(["credit", "debit", "pix"]);
 export type PaymentMethod = z.infer<typeof paymentMethodEnum>;
 
-export const sessionStatusEnum = z.enum(["active", "expired", "completed", "failed", "processing"]);
+export const sessionStatusEnum = z.enum(["pending", "paid", "expired", "cancelled"]);
 export type SessionStatus = z.infer<typeof sessionStatusEnum>;
 
 export const checkoutSessionSchema = z.object({
