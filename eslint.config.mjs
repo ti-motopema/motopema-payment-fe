@@ -1,4 +1,5 @@
 import { defineConfig, globalIgnores } from "eslint/config";
+import query from "@tanstack/eslint-plugin-query";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 

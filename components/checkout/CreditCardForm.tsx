@@ -10,8 +10,9 @@ import { formatCardNumber, formatExpiryDate, formatCVV, formatCurrency } from "@
 import { CreditCard, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+
 interface Props {
-  installmentOptions: CheckoutSession["installmentOptions"];
+  installmentOptions: CheckoutSession["installments"];
   onSubmit: (data: CreditCardFormData) => void;
   isProcessing: boolean;
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Shield, UserCheck } from "lucide-react";
-import { getAxiosStatus, verifyCheckoutCpf } from "@/lib/checkout-api";
+import { getAxiosStatus, verifyCheckoutCpf  } from "@/lib/checkout-api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ interface Props {
   sessionId: string;
   customerName: string;
   maskedCpf: string;
+  expiresAt: string;
   onVerified: () => void;
 }
 
@@ -32,7 +33,7 @@ function maskCpf(value: string): string {
   return `***.***.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
-export default function CpfVerification({ sessionId, customerName, maskedCpf, onVerified }: Props) {
+export default function CpfVerification({ sessionId, customerName, maskedCpf, expiresAt, onVerified }: Props) {
   const [cpf, setCpf] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -50,7 +51,13 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, on
     setErrorMessage("");
 
     try {
-      await verifyCheckoutCpf(sessionId, digits);
+      const response = await verifyCheckoutCpf(sessionId, digits, expiresAt);
+      
+      if (!response.success) {
+        setErrorMessage(response.message || "CPF nao corresponde ao cadastro desta compra.");
+        return;
+      }
+
       onVerified();
     } catch (error: unknown) {
       if (getAxiosStatus(error) === 401) {

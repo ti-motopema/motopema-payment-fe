@@ -37,7 +37,7 @@ export const checkoutSessionSchema = z.object({
     total: z.number(),
   }),
   availablePaymentMethods: z.array(paymentMethodEnum),
-  installmentOptions: z.array(z.object({
+  installments: z.array(z.object({ // Trocar para "installmentOptions" futuramente.
     installments: z.number(),
     value: z.number(),
     total: z.number(),
@@ -67,10 +67,17 @@ export const debitCardFormSchema = z.object({
 export type DebitCardFormData = z.infer<typeof debitCardFormSchema>;
 
 export const paymentResultSchema = z.object({
-  success: z.boolean(),
+  success: z.boolean().optional(),
+  dateTime: z.string().optional(),
+  returnCode: z.string().optional(),
   transactionId: z.string().optional(),
   pixCode: z.string().optional(),
   pixQrCode: z.string().optional(),
+  returnMessage: z.string().optional(),
+  threeDSecure: z.object({
+    embedded: z.boolean().optional(),
+    url: z.string().optional(),
+  }).optional(),
   message: z.string().optional(),
 });
 

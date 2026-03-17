@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Bike, Hash, Palette, Calendar } from "lucide-react";
-import type { CheckoutSession } from "@shared/schema";
+import type { CheckoutSession } from "@/shared/schema";
 
 interface Props {
   order: CheckoutSession["order"];
@@ -19,18 +19,18 @@ export default function OrderSummaryCard({ order }: Props) {
 
         <div className="mb-4">
           <p className="text-base font-semibold text-foreground" data-testid="text-order-model">
-            {order.description}
+            {order?.description}
           </p>
         </div>
 
         <div className="space-y-3">
-          <DetailRow icon={<Hash className="w-3.5 h-3.5" />} label="Proposta" value={order.proposalId} testId="text-proposal-id" />
-          <DetailRow icon={<Hash className="w-3.5 h-3.5" />} label="Pedido" value={order.orderNumber} testId="text-order-number" />
-          <DetailRow icon={<Palette className="w-3.5 h-3.5" />} label="Cor" value={order.color} testId="text-order-color" />
-          <DetailRow icon={<Calendar className="w-3.5 h-3.5" />} label="Ano" value={order.year} testId="text-order-year" />
+          <DetailRow icon={<Hash className="w-3.5 h-3.5" />} label="Proposta" value={order?.proposalId} testId="text-proposal-id" />
+          <DetailRow icon={<Hash className="w-3.5 h-3.5" />} label="Pedido" value={order?.orderNumber} testId="text-order-number" />
+          <DetailRow icon={<Palette className="w-3.5 h-3.5" />} label="Cor" value={order?.color} testId="text-order-color" />
+          <DetailRow icon={<Calendar className="w-3.5 h-3.5" />} label="Ano" value={order?.year} testId="text-order-year" />
         </div>
 
-        {order.notes && (
+        {order?.notes && (
           <div className="mt-4 pt-3 border-t">
             <p className="text-xs text-muted-foreground mb-1">Observações</p>
             <p className="text-sm text-foreground" data-testid="text-order-notes">{order.notes}</p>

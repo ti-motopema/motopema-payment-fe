@@ -6,6 +6,9 @@ Crie um arquivo `.env.local` com:
 
 ```bash
 BACKEND_API_URL=http://127.0.0.1:8000
+COOKIE_SECRET=change-me
+PAYMENT_PROVIDER_CLIENT_ID=your-client-id
+PAYMENT_PROVIDER_CLIENT_SECRET=your-client-secret
 ```
 
 Rotas internas usadas pelo frontend:
@@ -13,8 +16,12 @@ Rotas internas usadas pelo frontend:
 - `GET /api/checkout/:sessionId`
 - `POST /api/checkout/:sessionId/verify-cpf`
 - `POST /api/checkout/:sessionId/pay`
+- `POST /api/checkout/:sessionId/transaction/credit`
+- `POST /api/checkout/:sessionId/transaction/debit`
 
 Os mapeamentos para a API externa ficam centralizados em `lib/backend/checkout.ts`.
+
+Para cartao de credito e debito, o frontend nao recebe nem persiste o token do provedor. As credenciais ficam apenas no servidor, o token e buscado server-side a cada transacao e injetado no payload antes de encaminhar ao backend.
 
 ## Getting Started
 

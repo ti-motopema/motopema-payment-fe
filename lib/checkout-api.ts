@@ -1,33 +1,113 @@
 import { AxiosError } from "axios";
 import { get, post } from "@/lib/api";
 import type {
-  CheckoutSession,
   CreditCardFormData,
   DebitCardFormData,
-  PaymentResult,
 } from "@/shared/schema";
 
+
 export type VerifyCpfResponse = {
-  valid: boolean;
+  success: boolean;
   message?: string;
 };
 
-type PaymentMethodPayload =
-  | ({ method: "credit" } & CreditCardFormData)
-  | ({ method: "debit" } & DebitCardFormData)
-  | { method: "pix" };
 
-export function getCheckoutSession(sessionId: string) {
-  return get<CheckoutSession>(`/api/checkout/${sessionId}`);
+export interface CheckoutSessionRequest {
+  sessionId: string;
 }
 
-export function verifyCheckoutCpf(sessionId: string, cpf: string) {
-  return post<VerifyCpfResponse>(`/api/checkout/${sessionId}/verify-cpf`, { cpf });
+export interface PaymentProviderAccessTokenResponse {
+  success: boolean;
+  is_token_already_exist?: boolean | null;
+  message?: string;
 }
 
-export function payCheckoutSession(sessionId: string, payload: PaymentMethodPayload) {
-  return post<PaymentResult>(`/api/checkout/${sessionId}/pay`, payload);
+
+
+// BUSCA DE CHECKOUT SESSION
+// export function getCheckoutSession(sessionId: string) {
+//   return get(`/api/checkout/${sessionId}`);
+// }
+
+
+// // OBTENÇÃO DE TOKEN DE ACESSO PARA PROVEDOR DE PAGAMENTO
+// export function getPaymentProviderAccessToken() {
+//   return post(`/api/checkout/token`);
+// }
+
+export function fetchCheckoutSession({
+  sessionId,
+}: CheckoutSessionRequest) {
+  return get(`/api/checkout/${sessionId}`);
 }
+
+// OBTENÇÃO DE TOKEN DE ACESSO PARA PROVEDOR DE PAGAMENTO
+export function requestPaymentProviderAccessToken({
+  sessionId,
+}: CheckoutSessionRequest) {
+  return post<PaymentProviderAccessTokenResponse>(`/api/checkout/${sessionId}/auth/token`);
+}
+
+// TRANSAÇÕES DE CARTÃO DE CRÉDITO E DÉBITO
+// export function debitCardTransaction(sessionId: string, payload: DebitCardFormData) {
+//   return post(`/api/checkout/${sessionId}/transaction/debit`, { method: "debit", ...payload });
+// }
+
+// export function creditCardTransaction(sessionId: string, payload: CreditCardFormData, token: string) {
+//   return post(`/api/checkout/${sessionId}/transaction/credit`, { method: "credit", ...payload, accessToken: token });
+// }
+
+export interface CardDebitTransactionRequest {
+  sessionId: string;
+  payload: DebitCardFormData & {
+    amount: number;
+    threeDSecure: {
+      device: {
+        colorDepth: number;
+        deviceType3ds: string;
+        javaEnabled: boolean;
+        language: string;
+        screenHeight: number;
+        screenWidth: number;
+        timeZoneOffset: number;
+      };
+    };
+  };
+}
+
+export interface CardCreditTransactionRequest {
+  sessionId: string;
+  payload: CreditCardFormData & {
+    amount: number;
+  };
+}
+
+
+// TRANSAÇÃO DE CARTÃO DE DÉBITO
+export function createDebitCardTransaction({
+  sessionId,
+  payload,
+}: CardDebitTransactionRequest) {
+  return post(`/api/checkout/${sessionId}/transactions/debit-card`, {
+    ...payload,
+  });
+}
+
+
+export function createCreditCardTransaction({
+  sessionId,
+  payload,
+}: CardCreditTransactionRequest) {
+  return post(`/api/checkout/${sessionId}/transactions/credit-card`, {
+    ...payload,
+  });
+}
+
+
+export function verifyCheckoutCpf(sessionId: string, cpf: string, expiresAt: string) {
+  return post<VerifyCpfResponse>(`/api/checkout/${sessionId}/auth/verify`, { cpf, expiresAt });
+}
+
 
 export function getAxiosStatus(error: unknown) {
   if (error instanceof AxiosError) {

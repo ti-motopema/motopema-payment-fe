@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCheckoutSession } from "@/lib/backend/checkout";
+import { fetchCheckoutSession } from "@/lib/backend/checkout";
 import { proxyBackendJsonResponse } from "@/lib/backend/http";
 
 export async function GET(
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { sessionId } = await params;
-    const response = await getCheckoutSession(sessionId);
+    const response = await fetchCheckoutSession(sessionId);
     return proxyBackendJsonResponse(response);
   } catch (error) {
     return NextResponse.json(

@@ -18,15 +18,28 @@ export async function backendRequest({ path, headers, ...init }: BackendRequestO
 
 export async function proxyBackendJsonResponse(response: Response) {
   const contentType = response.headers.get("content-type") || "";
+  const setCookie = response.headers.get("set-cookie");
 
   if (contentType.includes("application/json")) {
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    const nextResponse = NextResponse.json(data, { status: response.status });
+
+    if (setCookie) {
+      nextResponse.headers.set("set-cookie", setCookie);
+    }
+
+    return nextResponse;
   }
 
   const text = await response.text();
-  return new NextResponse(text, {
+  const nextResponse = new NextResponse(text, {
     status: response.status,
     headers: contentType ? { "content-type": contentType } : undefined,
   });
+
+  if (setCookie) {
+    nextResponse.headers.set("set-cookie", setCookie);
+  }
+
+  return nextResponse;
 }
