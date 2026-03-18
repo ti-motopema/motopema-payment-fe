@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { creditCardFormSchema, type CreditCardFormData, type CheckoutSession } from "@/shared/schema";
+import { creditCardFormSchema, type CreditCardFormData } from "@/shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,12 +12,14 @@ import { Button } from "@/components/ui/button";
 
 
 interface Props {
-  installmentOptions: CheckoutSession["installments"];
+  totalAmount: number;
   onSubmit: (data: CreditCardFormData) => void;
   isProcessing: boolean;
 }
 
-export default function CreditCardForm({ installmentOptions, onSubmit, isProcessing }: Props) {
+const FIXED_INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, index) => index + 1);
+
+export default function CreditCardForm({ totalAmount, onSubmit, isProcessing }: Props) {
   const form = useForm<CreditCardFormData>({
     resolver: zodResolver(creditCardFormSchema),
     defaultValues: {
@@ -137,10 +139,9 @@ export default function CreditCardForm({ installmentOptions, onSubmit, isProcess
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {installmentOptions.map((opt) => (
-                    <SelectItem key={opt.installments} value={String(opt.installments)}>
-                      {opt.installments}x de {formatCurrency(opt.value)}
-                      {opt.interestRate > 0 ? ` (${opt.interestRate.toFixed(2)}% juros)` : " sem juros"}
+                  {FIXED_INSTALLMENT_OPTIONS.map((installments) => (
+                    <SelectItem key={installments} value={String(installments)}>
+                      {installments}x de {formatCurrency(totalAmount / installments)} sem juros
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -52,7 +52,7 @@ export const creditCardFormSchema = z.object({
   cardNumber: z.string().min(19, "Número do cartão inválido"),
   expiryDate: z.string().min(5, "Data de validade inválida"),
   cvv: z.string().min(3, "CVV inválido"),
-  installments: z.number().min(1),
+  installments: z.number().min(1).max(12),
 });
 
 export type CreditCardFormData = z.infer<typeof creditCardFormSchema>;

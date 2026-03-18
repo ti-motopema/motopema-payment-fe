@@ -225,6 +225,7 @@ export default function CheckoutClient({ sessionId, initialCpfVerified }: Checko
           amount: session.pricing.total,
         },
       });
+
       handlePaymentResponse(result, "credit");
     } catch (error: unknown) {
       if (getAxiosStatus(error) === 403) {
@@ -423,7 +424,7 @@ export default function CheckoutClient({ sessionId, initialCpfVerified }: Checko
                 <div className="border-t pt-5">
                   {activeMethod === "credit" && (
                     <CreditCardForm
-                      installmentOptions={session.installments}
+                      totalAmount={session.pricing.total}
                       onSubmit={handleCreditSubmit}
                       isProcessing={isProcessing || isTokenLoading}
                     />
