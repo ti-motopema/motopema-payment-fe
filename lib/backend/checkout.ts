@@ -26,8 +26,6 @@ export function verifyCheckoutCpf(sessionId: string, body: unknown) {
 
 export function getAccessToken(body: {
   sessionId: string;
-  client_id: string;
-  client_secret: string;
 }) {
   return backendRequest({
     path: `/payments/sessions/${body.sessionId}/auth/token`,
@@ -35,7 +33,6 @@ export function getAccessToken(body: {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ client_id: body.client_id, client_secret: body.client_secret }),
   });
 }
 
@@ -48,10 +45,7 @@ type AccessTokenPayload = {
 
 
 export async function requestPaymentProviderAccessToken(sessionId: string) {
-  const { clientId, clientSecret } = getPaymentProviderCredentials();
   const response = await getAccessToken({
-    client_id: clientId,
-    client_secret: clientSecret,
     sessionId,
   });
 

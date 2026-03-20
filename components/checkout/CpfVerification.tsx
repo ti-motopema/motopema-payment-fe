@@ -1,17 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, UserCheck } from "lucide-react";
-import { getAxiosStatus, verifyCheckoutCpf  } from "@/lib/checkout-api";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
+import { Button } from "@/components/ui/button";
+import { Shield, UserCheck } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 interface Props {
   sessionId: string;
   customerName: string;
   maskedCpf: string;
-  expiresAt: string;
   onVerified: () => void;
 }
 
@@ -23,17 +21,7 @@ function formatCpfInput(value: string): string {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
-function maskCpf(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-
-  if (digits.length !== 11) {
-    return value;
-  }
-
-  return `***.***.${digits.slice(6, 9)}-${digits.slice(9)}`;
-}
-
-export default function CpfVerification({ sessionId, customerName, maskedCpf, expiresAt, onVerified }: Props) {
+export default function CpfVerification({ sessionId, customerName, maskedCpf, onVerified }: Props) {
   const [cpf, setCpf] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -41,9 +29,8 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, ex
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const digits = cpf.replace(/\D/g, "");
-
     if (digits.length !== 11) {
-      setErrorMessage("Digite um CPF valido com 11 digitos.");
+      setErrorMessage("Digite um CPF válido com 11 dígitos.");
       return;
     }
 
@@ -51,18 +38,17 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, ex
     setErrorMessage("");
 
     try {
-      const response = await verifyCheckoutCpf(sessionId, digits, expiresAt);
-      
-      if (!response.success) {
-        setErrorMessage(response.message || "CPF nao corresponde ao cadastro desta compra.");
-        return;
-      }
-
+      await apiRequest("POST", `/api/checkout/${sessionId}/auth/verify`, { cpf: digits });
       onVerified();
-    } catch (error: unknown) {
-      if (getAxiosStatus(error) === 401) {
-        setErrorMessage("CPF nao corresponde ao cadastro desta compra.");
-      } else {
+    } catch (err: any) {
+      try {
+        const text = err.message || "";
+        if (text.includes("401")) {
+          setErrorMessage("CPF não corresponde ao cadastro desta compra.");
+        } else {
+          setErrorMessage("Erro ao verificar. Tente novamente.");
+        }
+      } catch {
         setErrorMessage("Erro ao verificar. Tente novamente.");
       }
     } finally {
@@ -74,7 +60,7 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, ex
     <div className="min-h-screen bg-background flex flex-col" data-testid="cpf-verification-page">
       <header className="w-full border-b bg-background">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-2 flex-wrap">
-          <img src="/motopema-logo.png" alt="Motopema Honda" className="h-8 sm:h-10 object-contain" />
+          <img src="/motopema-logo.png" alt="Motopema Honda" className="h-12 sm:h-16 object-contain" />
           <div className="flex items-center gap-1.5 text-muted-foreground text-xs sm:text-sm">
             <Shield className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
             <span>Pagamento Seguro</span>
@@ -90,9 +76,9 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, ex
                 <UserCheck className="w-8 h-8 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-foreground">Verificacao de Identidade</h2>
+                <h2 className="text-xl font-bold text-foreground">Verificação de Identidade</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Para sua seguranca, confirme seu CPF antes de acessar o pagamento.
+                  Para sua segurança, confirme seu CPF antes de acessar o pagamento.
                 </p>
               </div>
             </div>
@@ -100,7 +86,7 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, ex
             <div className="rounded-md bg-muted/50 px-4 py-3 space-y-1">
               <p className="text-xs text-muted-foreground">Cliente</p>
               <p className="text-sm font-medium text-foreground" data-testid="text-verify-customer-name">{customerName}</p>
-              <p className="text-xs text-muted-foreground mt-1">CPF cadastrado: <span className="font-mono" data-testid="text-verify-masked-cpf">{maskCpf(maskedCpf)}</span></p>
+              <p className="text-xs text-muted-foreground mt-1">CPF cadastrado: <span className="font-mono" data-testid="text-verify-masked-cpf">{maskedCpf}</span></p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -146,7 +132,7 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, ex
             </form>
 
             <p className="text-xs text-center text-muted-foreground">
-              Essa verificacao garante que apenas o titular da compra acesse este pagamento.
+              Essa verificação garante que apenas o titular da compra acesse este pagamento.
             </p>
           </CardContent>
         </Card>

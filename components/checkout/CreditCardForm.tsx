@@ -10,16 +10,27 @@ import { formatCardNumber, formatExpiryDate, formatCVV, formatCurrency } from "@
 import { CreditCard, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-
 interface Props {
-  totalAmount: number;
+  amount: string;
   onSubmit: (data: CreditCardFormData) => void;
   isProcessing: boolean;
 }
 
-const FIXED_INSTALLMENT_OPTIONS = Array.from({ length: 12 }, (_, index) => index + 1);
+function buildInstallmentOptions(amount: string) {
+  const total = parseFloat(amount);
+  if (isNaN(total) || total <= 0) return [];
+  return Array.from({ length: 12 }, (_, i) => {
+    const n = i + 1;
+    return {
+      installments: n,
+      value: total / n,
+    };
+  });
+}
 
-export default function CreditCardForm({ totalAmount, onSubmit, isProcessing }: Props) {
+export default function CreditCardForm({ amount, onSubmit, isProcessing }: Props) {
+  const installmentOptions = buildInstallmentOptions(amount);
+
   const form = useForm<CreditCardFormData>({
     resolver: zodResolver(creditCardFormSchema),
     defaultValues: {
@@ -139,9 +150,9 @@ export default function CreditCardForm({ totalAmount, onSubmit, isProcessing }: 
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {FIXED_INSTALLMENT_OPTIONS.map((installments) => (
-                    <SelectItem key={installments} value={String(installments)}>
-                      {installments}x de {formatCurrency(totalAmount / installments)} sem juros
+                  {installmentOptions.map((opt) => (
+                    <SelectItem key={opt.installments} value={String(opt.installments)}>
+                      {opt.installments}x de {formatCurrency(opt.value)} sem juros
                     </SelectItem>
                   ))}
                 </SelectContent>

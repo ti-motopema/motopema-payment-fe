@@ -1,16 +1,15 @@
 "use client";
 
-import { CheckCircle2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
 interface Props {
-  transactionId?: string;
-  total: number;
+  transaction_id?: string;
+  amount: string;
   method: string;
 }
 
-export default function SuccessState({ transactionId, total, method }: Props) {
+export default function SuccessState({ transaction_id, amount, method }: Props) {
   const methodLabels: Record<string, string> = {
     credit: "Cartão de Crédito",
     debit: "Cartão de Débito",
@@ -27,15 +26,15 @@ export default function SuccessState({ transactionId, total, method }: Props) {
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-foreground">Pagamento Aprovado!</h2>
           <p className="text-muted-foreground text-sm">
-            Seu pagamento de <strong className="text-foreground">{formatCurrency(total)}</strong> via {methodLabels[method] || method} foi processado com sucesso.
+            Seu pagamento de <strong className="text-foreground">{formatCurrency(amount)}</strong> via {methodLabels[method] || method} foi processado com sucesso.
           </p>
         </div>
 
-        {transactionId && (
+        {transaction_id && (
           <div className="rounded-md bg-muted/50 px-4 py-3">
             <p className="text-xs text-muted-foreground mb-1">ID da Transação</p>
             <p className="text-sm font-mono font-medium text-foreground" data-testid="text-transaction-id">
-              {transactionId}
+              {transaction_id}
             </p>
           </div>
         )}

@@ -3,46 +3,45 @@ import { z } from "zod";
 export const paymentMethodEnum = z.enum(["credit", "debit", "pix"]);
 export type PaymentMethod = z.infer<typeof paymentMethodEnum>;
 
-export const sessionStatusEnum = z.enum(["pending", "paid", "expired", "cancelled"]);
+export const sessionStatusEnum = z.enum([
+  "pending",
+  "paid",
+  "expired",
+  "cancelled",
+]);
 export type SessionStatus = z.infer<typeof sessionStatusEnum>;
 
 export const checkoutSessionSchema = z.object({
-  sessionId: z.string(),
+  session_id: z.string(),
   status: sessionStatusEnum,
-  paymentType: z.string(),
-  createdAt: z.string(),
-  expiresAt: z.string(),
-  completedAt: z.string().optional(),
-  completedMethod: z.string().optional(),
-  transactionId: z.string().optional(),
-  failureMessage: z.string().optional(),
+  deal_id: z.string(),
+  deal_type: z.string(),
+  payment_url: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  expires_at: z.string(),
+  completed_at: z.string().nullable(),
+  completed_method: paymentMethodEnum.nullable(),
+  expired_at: z.string().nullable(),
+  cancelled_at: z.string().nullable(),
+  failure_reason: z.string().nullable(),
   customer: z.object({
+    id: z.number(),
     name: z.string(),
     cpf: z.string(),
     phone: z.string(),
     email: z.string(),
   }),
   order: z.object({
-    proposalId: z.string(),
-    orderNumber: z.string(),
+    id: z.number(),
+    order_number: z.string(),
     description: z.string(),
     model: z.string(),
     color: z.string(),
     year: z.string(),
-    notes: z.string().optional(),
+    amount: z.string(),
+    notes: z.string().nullable(),
   }),
-  pricing: z.object({
-    subtotal: z.number(),
-    downPayment: z.number().optional(),
-    total: z.number(),
-  }),
-  availablePaymentMethods: z.array(paymentMethodEnum),
-  installments: z.array(z.object({ // Trocar para "installmentOptions" futuramente.
-    installments: z.number(),
-    value: z.number(),
-    total: z.number(),
-    interestRate: z.number(),
-  })),
 });
 
 export type CheckoutSession = z.infer<typeof checkoutSessionSchema>;
@@ -66,18 +65,27 @@ export const debitCardFormSchema = z.object({
 
 export type DebitCardFormData = z.infer<typeof debitCardFormSchema>;
 
+/**
+ * Browser fingerprint data collected client-side for 3-D Secure (debit card).
+ * IP address is added server-side from request headers.
+ */
+export const browserDataSchema = z.object({
+  userAgent: z.string(),
+  colorDepth: z.number(),
+  javaEnabled: z.boolean(),
+  language: z.string(),
+  screenHeight: z.number(),
+  screenWidth: z.number(),
+  timeZoneOffset: z.number(),
+});
+
+export type BrowserData = z.infer<typeof browserDataSchema>;
+
 export const paymentResultSchema = z.object({
-  success: z.boolean().optional(),
-  dateTime: z.string().optional(),
-  returnCode: z.string().optional(),
-  transactionId: z.string().optional(),
-  pixCode: z.string().optional(),
-  pixQrCode: z.string().optional(),
-  returnMessage: z.string().optional(),
-  threeDSecure: z.object({
-    embedded: z.boolean().optional(),
-    url: z.string().optional(),
-  }).optional(),
+  success: z.boolean(),
+  transaction_id: z.string().optional(),
+  pix_code: z.string().optional(),
+  pix_qr_code: z.string().optional(),
   message: z.string().optional(),
 });
 

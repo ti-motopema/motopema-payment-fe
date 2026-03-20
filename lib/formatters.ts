@@ -27,3 +27,10 @@ export function maskCardNumber(cardNumber: string): string {
   if (digits.length < 4) return cardNumber;
   return `**** **** **** ${digits.slice(-4)}`;
 }
+
+export function maskCpf(cpf: string): string {
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11) return cpf;
+  return `***.***.${digits.slice(6, 9)}-**`;
+}
+

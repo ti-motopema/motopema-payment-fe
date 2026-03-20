@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getAccessToken,
 } from "@/lib/backend/checkout";
-import { getPaymentProviderCredentials } from "@/lib/backend/config";
 import { proxyBackendJsonResponse } from "@/lib/backend/http";
 
 export async function POST(
@@ -11,11 +10,8 @@ export async function POST(
 ) {
   try {
     const { sessionId } = await params;
-    const { clientId, clientSecret } = getPaymentProviderCredentials();
     const response = await getAccessToken({
       sessionId,
-      client_id: clientId,
-      client_secret: clientSecret,
     });
 
     return proxyBackendJsonResponse(response);
