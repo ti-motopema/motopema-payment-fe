@@ -38,17 +38,13 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, on
     setErrorMessage("");
 
     try {
-      await apiRequest("POST", `/api/checkout/${sessionId}/auth/verify`, { cpf: digits });
+      await apiRequest("POST", `/api/checkout/${sessionId}/verify-cpf`, { cpf: digits });
       onVerified();
-    } catch (err: any) {
-      try {
-        const text = err.message || "";
-        if (text.includes("401")) {
-          setErrorMessage("CPF não corresponde ao cadastro desta compra.");
-        } else {
-          setErrorMessage("Erro ao verificar. Tente novamente.");
-        }
-      } catch {
+    } catch (err: unknown) {
+      const text = err instanceof Error ? err.message : "";
+      if (text.includes("401")) {
+        setErrorMessage("CPF não corresponde ao cadastro desta compra.");
+      } else {
         setErrorMessage("Erro ao verificar. Tente novamente.");
       }
     } finally {

@@ -11,14 +11,14 @@ import { CreditCard, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  amount: string;
+  amount: number;
   onSubmit: (data: CreditCardFormData) => void;
   isProcessing: boolean;
 }
 
-function buildInstallmentOptions(amount: string) {
-  const total = parseFloat(amount);
-  if (isNaN(total) || total <= 0) return [];
+function buildInstallmentOptions(amount: number) {
+  const total = amount;
+  if (!total || total <= 0) return [];
   return Array.from({ length: 12 }, (_, i) => {
     const n = i + 1;
     return {

@@ -7,7 +7,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
-  amount: string;
+  amount: number;
   onGeneratePix: () => void;
   isProcessing: boolean;
   pix_code?: string;

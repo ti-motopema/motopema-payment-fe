@@ -1,37 +1,49 @@
 import { z } from "zod";
 
+// ─── Payment method (internal UI names) ───────────────────────────────────────
 export const paymentMethodEnum = z.enum(["credit", "debit", "pix"]);
 export type PaymentMethod = z.infer<typeof paymentMethodEnum>;
 
+// ─── Completed method (backend/session names) ─────────────────────────────────
+export const completedMethodEnum = z.enum(["pix", "credit_card", "debit_card"]);
+export type CompletedMethod = z.infer<typeof completedMethodEnum>;
+
+// ─── Deal type ────────────────────────────────────────────────────────────────
+export const dealTypeEnum = z.enum(["motorcycle", "financing", "consortium", "entrance"]);
+export type DealType = z.infer<typeof dealTypeEnum>;
+
+// ─── Session status ───────────────────────────────────────────────────────────
 export const sessionStatusEnum = z.enum([
   "pending",
-  "paid",
+  "processing",
+  "approved",
+  "failed",
   "expired",
   "cancelled",
 ]);
 export type SessionStatus = z.infer<typeof sessionStatusEnum>;
 
+// ─── Checkout session (flattened for the frontend) ────────────────────────────
 export const checkoutSessionSchema = z.object({
+  // Session fields
   session_id: z.string(),
   status: sessionStatusEnum,
-  deal_id: z.string(),
-  deal_type: z.string(),
-  payment_url: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  deal_type: dealTypeEnum,
+  completed_method: completedMethodEnum.nullable(),
   expires_at: z.string(),
-  completed_at: z.string().nullable(),
-  completed_method: paymentMethodEnum.nullable(),
-  expired_at: z.string().nullable(),
-  cancelled_at: z.string().nullable(),
   failure_reason: z.string().nullable(),
+
+  // Customer
   customer: z.object({
     id: z.number(),
     name: z.string(),
     cpf: z.string(),
     phone: z.string(),
     email: z.string(),
+    contact_id: z.string(),
   }),
+
+  // Order
   order: z.object({
     id: z.number(),
     order_number: z.string(),
@@ -39,12 +51,15 @@ export const checkoutSessionSchema = z.object({
     model: z.string(),
     color: z.string(),
     year: z.string(),
-    amount: z.string(),
+    installments: z.number(),
+    amount: z.number(),
     notes: z.string().nullable(),
   }),
 });
 
 export type CheckoutSession = z.infer<typeof checkoutSessionSchema>;
+
+// ─── Card form schemas ────────────────────────────────────────────────────────
 
 export const creditCardFormSchema = z.object({
   cardholderName: z.string().min(3, "Nome do titular obrigatório"),
@@ -65,9 +80,9 @@ export const debitCardFormSchema = z.object({
 
 export type DebitCardFormData = z.infer<typeof debitCardFormSchema>;
 
+// ─── Browser fingerprint (3-D Secure) ────────────────────────────────────────
 /**
- * Browser fingerprint data collected client-side for 3-D Secure (debit card).
- * IP address is added server-side from request headers.
+ * Collected client-side. IP address is added server-side from request headers.
  */
 export const browserDataSchema = z.object({
   userAgent: z.string(),
@@ -81,6 +96,7 @@ export const browserDataSchema = z.object({
 
 export type BrowserData = z.infer<typeof browserDataSchema>;
 
+// ─── Payment result ───────────────────────────────────────────────────────────
 export const paymentResultSchema = z.object({
   success: z.boolean(),
   transaction_id: z.string().optional(),
@@ -91,6 +107,7 @@ export const paymentResultSchema = z.object({
 
 export type PaymentResult = z.infer<typeof paymentResultSchema>;
 
+// ─── Stub (required by template tooling) ──────────────────────────────────────
 export const users = undefined;
 export type InsertUser = never;
 export type User = never;

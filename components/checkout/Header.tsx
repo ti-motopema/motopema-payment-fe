@@ -9,7 +9,7 @@ export default function Header() {
         <img
           src="/motopema-logo.png"
           alt="Motopema Honda"
-          className="h-8 sm:h-10 object-contain"
+          className="h-12 sm:h-16 object-contain"
           data-testid="img-logo"
         />
         <div className="flex items-center gap-1.5 text-muted-foreground text-xs sm:text-sm">

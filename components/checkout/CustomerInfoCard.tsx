@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { User, Mail, Phone, FileText } from "lucide-react";
+import { maskCpf } from "@/lib/formatters";
 import type { CheckoutSession } from "@/shared/schema";
 
 interface Props {
@@ -17,10 +18,10 @@ export default function CustomerInfoCard({ customer }: Props) {
           Dados do Cliente
         </h3>
         <div className="space-y-3">
-          <InfoRow icon={<User className="w-3.5 h-3.5" />} label="Nome" value={customer?.name ?? ""} testId="text-customer-name" />
-          <InfoRow icon={<FileText className="w-3.5 h-3.5" />} label="CPF" value={customer?.cpf ?? ""} testId="text-customer-cpf" />
-          <InfoRow icon={<Phone className="w-3.5 h-3.5" />} label="Telefone" value={customer?.phone ?? ""} testId="text-customer-phone" />
-          <InfoRow icon={<Mail className="w-3.5 h-3.5" />} label="E-mail" value={customer?.email ?? ""} testId="text-customer-email" />
+          <InfoRow icon={<User className="w-3.5 h-3.5" />} label="Nome" value={customer.name} testId="text-customer-name" />
+          <InfoRow icon={<FileText className="w-3.5 h-3.5" />} label="CPF" value={maskCpf(customer.cpf)} testId="text-customer-cpf" />
+          <InfoRow icon={<Phone className="w-3.5 h-3.5" />} label="Telefone" value={customer.phone} testId="text-customer-phone" />
+          <InfoRow icon={<Mail className="w-3.5 h-3.5" />} label="E-mail" value={customer.email} testId="text-customer-email" />
         </div>
       </CardContent>
     </Card>

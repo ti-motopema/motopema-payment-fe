@@ -1,21 +1,15 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, completedMethodLabel } from "@/lib/formatters";
 
 interface Props {
   transaction_id?: string;
-  amount: string;
+  amount: number;
   method: string;
 }
 
 export default function SuccessState({ transaction_id, amount, method }: Props) {
-  const methodLabels: Record<string, string> = {
-    credit: "Cartão de Crédito",
-    debit: "Cartão de Débito",
-    pix: "PIX",
-  };
-
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4" data-testid="state-success">
       <div className="text-center max-w-sm mx-auto space-y-6">
@@ -26,7 +20,7 @@ export default function SuccessState({ transaction_id, amount, method }: Props) 
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-foreground">Pagamento Aprovado!</h2>
           <p className="text-muted-foreground text-sm">
-            Seu pagamento de <strong className="text-foreground">{formatCurrency(amount)}</strong> via {methodLabels[method] || method} foi processado com sucesso.
+            Seu pagamento de <strong className="text-foreground">{formatCurrency(amount)}</strong> via {completedMethodLabel(method)} foi processado com sucesso.
           </p>
         </div>
 

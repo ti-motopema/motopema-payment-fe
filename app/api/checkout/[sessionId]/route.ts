@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchCheckoutSession } from "@/lib/backend/checkout";
-import { proxyBackendJsonResponse } from "@/lib/backend/http";
+import { sessionsApi } from "@/lib/backendClient";
 
 export async function GET(
   _req: NextRequest,
@@ -8,14 +7,18 @@ export async function GET(
 ) {
   try {
     const { sessionId } = await params;
-    const response = await fetchCheckoutSession(sessionId);
-    return proxyBackendJsonResponse(response);
-  } catch (error) {
+    // const session = await storage.getCheckoutSession(sessionId);
+    const session = await sessionsApi.get(sessionId);
+    if (!session) {
+      return NextResponse.json(
+        { error: "Sessão não encontrada.", reason: "not_found" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(session);
+  } catch {
     return NextResponse.json(
-      {
-        error: "Erro ao consultar sessao no backend.",
-        message: error instanceof Error ? error.message : "Erro desconhecido.",
-      },
+      { error: "Erro interno do servidor." },
       { status: 500 }
     );
   }
