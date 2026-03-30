@@ -19,8 +19,9 @@ export async function POST(
 
     // const result = await storage.verifyCpf(sessionId, cpf);
     const result = await authApi.verify(sessionId, cpf);
+    
     // @ts-ignore - // TODO: Corrigir tipo de resposta da API
-    if (!result.valid) {
+    if (!result.success) {
       return NextResponse.json(result, { status: 401 });
     }
     return NextResponse.json(result);

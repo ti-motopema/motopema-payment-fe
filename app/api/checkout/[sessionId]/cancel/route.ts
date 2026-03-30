@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { storage } from "@/server/storage";
+import { sessionsApi } from "@/lib/backendClient";
 
 export async function POST(
   _req: NextRequest,
@@ -7,8 +7,10 @@ export async function POST(
 ) {
   try {
     const { sessionId } = await params;
-    const result = await storage.cancelSession(sessionId);
-
+    // const result = await storage.cancelSession(sessionId);
+    const result = await sessionsApi.update(sessionId, "cancelled");
+    
+    // TODO: Adicionar a tipagem correta para o resultado da API e remover o "success" genérico
     if (!result.success) {
       return NextResponse.json(
         { error: result.message ?? "Não foi possível cancelar a sessão." },
