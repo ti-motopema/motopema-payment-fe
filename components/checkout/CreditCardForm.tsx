@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { creditCardFormSchema, type CreditCardFormData, type CheckoutSession } from "@/shared/schema";
+import { creditCardFormSchema, type CreditCardFormData } from "@/shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,12 +11,26 @@ import { CreditCard, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  installmentOptions: CheckoutSession["installmentOptions"];
+  amount: number;
   onSubmit: (data: CreditCardFormData) => void;
   isProcessing: boolean;
 }
 
-export default function CreditCardForm({ installmentOptions, onSubmit, isProcessing }: Props) {
+function buildInstallmentOptions(amount: number) {
+  const total = amount;
+  if (!total || total <= 0) return [];
+  return Array.from({ length: 12 }, (_, i) => {
+    const n = i + 1;
+    return {
+      installments: n,
+      value: total / n,
+    };
+  });
+}
+
+export default function CreditCardForm({ amount, onSubmit, isProcessing }: Props) {
+  const installmentOptions = buildInstallmentOptions(amount);
+
   const form = useForm<CreditCardFormData>({
     resolver: zodResolver(creditCardFormSchema),
     defaultValues: {
@@ -138,8 +152,7 @@ export default function CreditCardForm({ installmentOptions, onSubmit, isProcess
                 <SelectContent>
                   {installmentOptions.map((opt) => (
                     <SelectItem key={opt.installments} value={String(opt.installments)}>
-                      {opt.installments}x de {formatCurrency(opt.value)}
-                      {opt.interestRate > 0 ? ` (${opt.interestRate.toFixed(2)}% juros)` : " sem juros"}
+                      {opt.installments}x de {formatCurrency(opt.value)} sem juros
                     </SelectItem>
                   ))}
                 </SelectContent>

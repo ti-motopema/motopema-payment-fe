@@ -1,7 +1,7 @@
 "use client";
 
 import { CreditCard, Landmark, QrCode } from "lucide-react";
-import type { PaymentMethod } from "@shared/schema";
+import type { PaymentMethod } from "@/shared/schema";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

@@ -7,14 +7,14 @@ import { formatCurrency } from "@/lib/formatters";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
-  total: number;
+  amount: number;
   onGeneratePix: () => void;
   isProcessing: boolean;
-  pixCode?: string;
+  pix_code?: string;
   pixGenerated: boolean;
 }
 
-export default function PixPaymentPanel({ total, onGeneratePix, isProcessing, pixCode, pixGenerated }: Props) {
+export default function PixPaymentPanel({ amount, onGeneratePix, isProcessing, pix_code, pixGenerated }: Props) {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
@@ -42,9 +42,9 @@ export default function PixPaymentPanel({ total, onGeneratePix, isProcessing, pi
   };
 
   const handleCopy = async () => {
-    if (!pixCode) return;
+    if (!pix_code) return;
     try {
-      await navigator.clipboard.writeText(pixCode);
+      await navigator.clipboard.writeText(pix_code);
       setCopied(true);
       toast({ title: "Código PIX copiado!" });
       setTimeout(() => setCopied(false), 3000);
@@ -71,7 +71,7 @@ export default function PixPaymentPanel({ total, onGeneratePix, isProcessing, pi
         </div>
 
         <div className="rounded-md bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground space-y-1">
-          <p>Pagamento à vista via PIX no valor de <strong className="text-foreground">{formatCurrency(total)}</strong></p>
+          <p>Pagamento à vista via PIX no valor de <strong className="text-foreground">{formatCurrency(amount)}</strong></p>
           <p>O código tem validade de 30 minutos após a geração.</p>
         </div>
 
@@ -130,7 +130,7 @@ export default function PixPaymentPanel({ total, onGeneratePix, isProcessing, pi
         <label className="text-xs font-medium text-muted-foreground">Código PIX (copia e cola)</label>
         <div className="relative">
           <div className="bg-muted/50 rounded-md px-3 py-2.5 pr-10 text-xs font-mono break-all leading-relaxed text-foreground" data-testid="text-pix-code">
-            {pixCode}
+            {pix_code}
           </div>
           <Button
             onClick={handleCopy}
