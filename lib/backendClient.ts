@@ -9,6 +9,8 @@
  *   BACKEND_DISTRIBUTOR_AFFILIATION  – Distributor affiliation code (defaults to 0)
  */
 
+import { randomUUID } from "crypto";
+
 // ─── Payment providers ────────────────────────────────────────────────────────
 
 /** e.Rede: handles credit and debit card payments. */
@@ -47,34 +49,46 @@ export interface ThreeDSecureData {
   billing: ThreeDSecureBilling;
 }
 
+/** POST /payments/sessions/{session_id}/transactions/credit-card */
 export interface CreditCardPayload {
   cardholderName: string;
   cardNumber: string;
   expiryDate: string;
   cvv: string;
   installments: number;
-  amount: number;
   distributorAffiliation: number;
 }
 
+/** POST /payments/sessions/{session_id}/transactions/debit-card */
 export interface DebitCardPayload {
   cardholderName: string;
   cardNumber: string;
   expiryDate: string;
   cvv: string;
-  amount: number;
   distributorAffiliation: number;
   threeDSecure: ThreeDSecureData;
 }
 
+/** PUT /payments/sessions/{session_id}/transactions/pix */
 export interface PixPayload {
-  amount: number;
-  customerEmail?: string;
-  customerPhone?: string;
+  cpf: string;
+  name: string;
+  payer_request: string;
+  expiration: number;
 }
 
 export interface SessionUpdatePayload {
   status: string;
+}
+
+// ─── Idempotency key ──────────────────────────────────────────────────────────
+
+/**
+ * Generates a unique idempotency key (UUID v4, 36 chars).
+ * Required header for all transaction requests (minLength: 8, maxLength: 128).
+ */
+export function generateIdempotencyKey(): string {
+  return randomUUID();
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
@@ -96,9 +110,7 @@ async function extractErrorMessage(res: Response, method: string, path: string):
     const raw = body?.detail ?? body?.message ?? body?.error;
     if (raw) detail = typeof raw === "string" ? raw : JSON.stringify(raw);
   } catch {
-    try {
-      detail = await res.text();
-    } catch { /* ignore */ }
+    try { detail = await res.text(); } catch { /* ignore */ }
   }
   const hint = detail ?? res.statusText ?? `HTTP ${res.status}`;
   return `[BackendClient] ${method} ${path} → ${res.status}: ${hint}`;
@@ -108,10 +120,14 @@ async function request<T = unknown>(
   method: string,
   path: string,
   body?: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<T> {
   const res = await fetch(`${baseUrl()}${path}`, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...extraHeaders,
+    },
     body: body !== undefined ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
@@ -209,21 +225,47 @@ export const transactionsApi = {
   /**
    * POST /payments/sessions/{session_id}/transactions/credit-card
    * Provider: e.Rede (PROVIDER_CARD).
+   * Header: Idempotency-Key (auto-generated per call).
+   *
+   * Body: cardholderName, cardNumber, expiryDate, cvv, installments,
+   *       distributorAffiliation.
+   * Note: amount is NOT sent — the backend reads it from the session.
    */
   creditCard: <T = unknown>(sessionId: string, payload: CreditCardPayload): Promise<T> =>
-    request<T>("POST", `/payments/sessions/${sessionId}/transactions/credit-card`, payload),
+    request<T>(
+      "POST",
+      `/payments/sessions/${sessionId}/transactions/credit-card`,
+      payload,
+    ),
 
   /**
    * POST /payments/sessions/{session_id}/transactions/debit-card
    * Provider: e.Rede (PROVIDER_CARD).
+   * Header: Idempotency-Key (auto-generated per call).
+   *
+   * Body: cardholderName, cardNumber, expiryDate, cvv, distributorAffiliation,
+   *       threeDSecure { userAgent, ipAddress, device, billing }.
+   * Note: amount and installments are NOT sent.
    */
   debitCard: <T = unknown>(sessionId: string, payload: DebitCardPayload): Promise<T> =>
-    request<T>("POST", `/payments/sessions/${sessionId}/transactions/debit-card`, payload),
+    request<T>(
+      "POST",
+      `/payments/sessions/${sessionId}/transactions/debit-card`,
+      payload,
+    ),
 
   /**
    * PUT /payments/sessions/{session_id}/transactions/pix
    * Provider: Santander (PROVIDER_PIX).
+   * Header: Idempotency-Key (auto-generated per call).
+   *
+   * Body: cpf, name, payer_request, expiration (seconds — default 1200).
+   * Note: amount is NOT sent — the backend reads it from the session.
    */
   pix: <T = unknown>(sessionId: string, payload: PixPayload): Promise<T> =>
-    request<T>("PUT", `/payments/sessions/${sessionId}/transactions/pix`, payload),
+    request<T>(
+      "PUT",
+      `/payments/sessions/${sessionId}/transactions/pix`,
+      payload,
+    ),
 };

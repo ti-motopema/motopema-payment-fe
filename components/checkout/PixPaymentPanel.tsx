@@ -151,7 +151,7 @@ export default function PixPaymentPanel({ amount, onGeneratePix, isProcessing, p
 
       {awaitingConfirmation && timeLeft > 0 && (
         <div className="flex items-center gap-3 rounded-md bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border border-amber-200 dark:border-amber-800" data-testid="status-awaiting-pix">
-          <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
           <div>
             <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Aguardando pagamento</p>
             <p className="text-xs text-amber-600 dark:text-amber-400">Escaneie o QR Code ou copie o código acima.</p>

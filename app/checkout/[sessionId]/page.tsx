@@ -102,7 +102,7 @@ export default function CheckoutPage() {
         method: "credit",
         ...data,
       });
-      await handlePaymentResponse(result, "credit");
+      // await handlePaymentResponse(result, "credit");
     } catch (err: unknown) {
       if (err instanceof Error && err.message?.includes("403")) {
         queryClient.invalidateQueries({ queryKey: ["/api/checkout", sessionId] });
@@ -140,6 +140,7 @@ export default function CheckoutPage() {
       const result = await apiRequest("POST", `/api/checkout/${sessionId}/pay`, {
         method: "pix",
       });
+      console.log("Pix generation response:", result);
       await handlePaymentResponse(result, "pix");
     } catch (err: unknown) {
       if (err instanceof Error && err.message?.includes("403")) {
@@ -257,7 +258,7 @@ export default function CheckoutPage() {
   const effectiveMethods: PaymentMethod[] =
     session.deal_type === "consortium"
       ? ["credit", "debit", "pix"]
-      : ["pix"];
+      : ["credit", "debit", "pix"];
 
   const activeMethod: PaymentMethod =
     selectedMethod && effectiveMethods.includes(selectedMethod)
@@ -285,7 +286,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 space-y-4">
             <CustomerInfoCard customer={session.customer} />
             <OrderSummaryCard order={session.order} dealType={session.deal_type} />
-            <PriceSummary amount={session.order?.amount} />
+            <PriceSummary order={session.order} />
           </div>
 
           <div className="lg:col-span-7 space-y-4">
