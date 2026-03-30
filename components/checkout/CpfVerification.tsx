@@ -39,6 +39,7 @@ export default function CpfVerification({ sessionId, customerName, maskedCpf, on
 
     try {
       await apiRequest("POST", `/api/checkout/${sessionId}/verify-cpf`, { cpf: digits });
+      // TODO: Adicionar tratamento de erros mais específico com base no status code retornado pela API
       onVerified();
     } catch (err: unknown) {
       const text = err instanceof Error ? err.message : "";

@@ -182,7 +182,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-background">
         <Header />
         <SuccessState
-          amount={session.order.amount}
+          amount={session.order?.amount}
           method={session.completed_method || "pix"}
         />
         <SecurityFooter />
@@ -242,7 +242,7 @@ export default function CheckoutPage() {
         <Header />
         <SuccessState
           transaction_id={paymentResult.transaction_id}
-          amount={session.order.amount}
+          amount={session.order?.amount}
           method={selectedMethod || "pix"}
         />
         <SecurityFooter />
@@ -285,7 +285,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 space-y-4">
             <CustomerInfoCard customer={session.customer} />
             <OrderSummaryCard order={session.order} dealType={session.deal_type} />
-            <PriceSummary amount={session.order.amount} />
+            <PriceSummary amount={session.order?.amount} />
           </div>
 
           <div className="lg:col-span-7 space-y-4">
@@ -304,7 +304,7 @@ export default function CheckoutPage() {
                 <div className="border-t pt-5">
                   {activeMethod === "credit" && (
                     <CreditCardForm
-                      amount={session.order.amount}
+                      amount={session.order?.amount}
                       onSubmit={handleCreditSubmit}
                       isProcessing={isProcessing}
                     />
@@ -319,7 +319,7 @@ export default function CheckoutPage() {
 
                   {activeMethod === "pix" && (
                     <PixPaymentPanel
-                      amount={session.order.amount}
+                      amount={session.order?.amount}
                       onGeneratePix={handlePixGenerate}
                       isProcessing={isProcessing}
                       pix_code={paymentResult?.pix_code}
